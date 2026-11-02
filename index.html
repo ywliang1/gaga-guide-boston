@@ -143,18 +143,21 @@ main .wrap { padding-block: 8px 48px; }
 .card-link:focus-visible { outline: 2px solid var(--red-ink); outline-offset: -2px; border-radius: 12px; }
 
 /* Friends' votes: hidden until the vote store answers */
-.votes { display: none; gap: 8px; padding: 0 14px 14px; }
-.votes-on .votes, .talk-on .votes { display: flex; }
+/* Overrated | Underrated on the first row, comments across the second */
+.votes { display: none; gap: 6px; padding: 0 14px 14px; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-areas: "down up" "talk talk"; }
+.votes-on .votes, .talk-on .votes { display: grid; }
+.vote.down { grid-area: down; } .vote.up { grid-area: up; } .vote.talk { grid-area: talk; }
 body:not(.votes-on) .vote.up, body:not(.votes-on) .vote.down { display: none; }
 .vote.talk { display: none; }
 .talk-on .vote.talk { display: inline-flex; }
 .vote {
-  display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 12px; border-radius: 999px;
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: 32px; padding: 0 10px; border-radius: 999px; min-width: 0;
   border: 1px solid var(--line); background: var(--surface); color: var(--muted); cursor: pointer;
   font: 600 13px/1 var(--f-body); font-variant-numeric: tabular-nums;
 }
 .vote svg { width: 16px; height: 16px; flex: none; }
-.vote b { font: 600 13px/1 var(--f-body); }
+.vote b { font: 600 12.5px/1 var(--f-body); }
+.vote .talk-word { font-weight: 600; }
 .vote:hover { border-color: var(--red-ink); color: var(--ink); }
 .vote:focus-visible { outline: 2px solid var(--red-ink); outline-offset: 2px; }
 .vote.up[aria-pressed="true"] { background: var(--red); border-color: var(--red); color: var(--on-red); }
@@ -256,9 +259,8 @@ details summary { cursor: pointer; color: var(--ink); font-weight: 600; }
   .meta { font-size: 12px; }
   /* Two vote buttons stacked on the left, comments beside them */
   .votes { padding: 0 10px 12px; gap: 6px; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "down talk" "up talk"; }
-  .votes-on .votes, .talk-on .votes { display: grid; }
+  .vote .talk-word { display: none; }
   .vote { width: 100%; padding: 0 8px; gap: 4px; justify-content: center; height: 30px; }
-  .vote.down { grid-area: down; } .vote.up { grid-area: up; }
   .talk-on .vote.talk { grid-area: talk; height: 100%; flex-direction: column; padding: 0 10px; }
   .sheet { width: 100%; max-width: 100%; max-height: 90vh; margin: auto 0 0; border-radius: 16px 16px 0 0; }
   .talk-form { padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px)); }
@@ -416,7 +418,7 @@ function voteButtons(r) {
   const busy = votes.busy.has(r.id) ? ` aria-busy="true"` : "";
   return `<button class="vote down" type="button" aria-pressed="${mine === -1}"${busy} title="Ranked too high" aria-label="${esc(r.name)} is ranked too high, ${t.down} so far"><b>Overrated</b><span>${t.down}</span></button>
     <button class="vote up" type="button" aria-pressed="${mine === 1}"${busy} title="Ranked too low" aria-label="${esc(r.name)} is ranked too low, ${t.up} so far"><b>Underrated</b><span>${t.up}</span></button>
-    <button class="vote talk" type="button" aria-haspopup="dialog" aria-label="Comments on ${esc(r.name)}, ${talk.counts[r.id] || 0} so far">${ICON_TALK}<span>${talk.counts[r.id] || 0}</span></button>`;
+    <button class="vote talk" type="button" aria-haspopup="dialog" aria-label="Comments on ${esc(r.name)}, ${talk.counts[r.id] || 0} so far">${ICON_TALK}<b class="talk-word">Comments</b><span>${talk.counts[r.id] || 0}</span></button>`;
 }
 
 function paintVotes(id) {
