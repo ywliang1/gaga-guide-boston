@@ -144,7 +144,10 @@ main .wrap { padding-block: 8px 48px; }
 
 /* Friends' votes: hidden until the vote store answers */
 .votes { display: none; gap: 8px; padding: 0 14px 14px; }
-.votes-on .votes { display: flex; }
+.votes-on .votes, .talk-on .votes { display: flex; }
+body:not(.votes-on) .vote.up, body:not(.votes-on) .vote.down { display: none; }
+.vote.talk { display: none; }
+.talk-on .vote.talk { display: inline-flex; }
 .vote {
   display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 12px; border-radius: 999px;
   border: 1px solid var(--line); background: var(--surface); color: var(--muted); cursor: pointer;
@@ -156,7 +159,9 @@ main .wrap { padding-block: 8px 48px; }
 .vote.up[aria-pressed="true"] { background: var(--red); border-color: var(--red); color: var(--on-red); }
 .vote.down[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: var(--bg); }
 .vote[aria-busy="true"] { opacity: .6; cursor: progress; }
-.vote-hint { display: none; }
+.vote-hint, .talk-hint { display: none; }
+.talk-on span.talk-hint { display: inline; }
+.talk-on p.talk-hint { display: block; }
 .votes-on span.vote-hint { display: inline; }
 .votes-on p.vote-hint { display: block; }
 #sort { display: none; }
@@ -166,6 +171,42 @@ main .wrap { padding-block: 8px 48px; }
   max-width: calc(100% - 32px); padding: 10px 16px; border-radius: 10px; z-index: 20;
   background: var(--ink); color: var(--bg); font: 500 14px/1.4 var(--f-body); box-shadow: var(--shadow);
 }
+/* Comments panel: a centred sheet on wide screens, a bottom sheet on phones */
+.talk {
+  width: min(560px, calc(100% - 32px)); max-height: min(88vh, 760px); padding: 0; border: 0; border-radius: 14px;
+  background: var(--surface); color: var(--ink); box-shadow: 0 20px 60px rgba(0,0,0,.35);
+}
+.talk[open] { display: flex; flex-direction: column; }
+.talk::backdrop { background: rgba(20, 8, 9, .5); }
+.talk-head { display: flex; gap: 12px; align-items: start; justify-content: space-between; padding: 18px 18px 12px; border-bottom: 1px solid var(--line); }
+.talk-head h2 { margin: 0; font: 400 22px/1.15 var(--f-display); text-wrap: balance; }
+.talk-sub { margin: 2px 0 0; font-size: 13px; color: var(--muted); }
+.talk-x {
+  flex: none; width: 36px; height: 36px; border-radius: 999px; border: 1px solid var(--line); cursor: pointer;
+  background: var(--surface); color: var(--ink); display: grid; place-items: center;
+}
+.talk-x svg { width: 18px; height: 18px; }
+.talk-list { flex: 1 1 auto; overflow-y: auto; overscroll-behavior: contain; padding: 4px 18px; min-height: 90px; }
+.talk-list .note { color: var(--muted); font-size: 14px; padding: 18px 0; margin: 0; }
+.cmt { padding: 12px 0; border-bottom: 1px solid var(--line); }
+.cmt:last-child { border-bottom: 0; }
+.cmt-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 8px; font-size: 13px; color: var(--muted); }
+.cmt-head b { color: var(--ink); font-weight: 700; font-size: 14px; }
+.cmt-del { margin-left: auto; border: 0; background: none; color: var(--red-ink); font: 600 12px var(--f-body); cursor: pointer; padding: 2px 0; }
+.cmt p { margin: 4px 0 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.talk-form { display: grid; gap: 8px; padding: 12px 18px 18px; border-top: 1px solid var(--line); }
+.talk-form input, .talk-form textarea {
+  width: 100%; border-radius: 10px; border: 1px solid var(--line); background: var(--bg); color: var(--ink);
+  padding: 9px 12px; font: 400 16px/1.4 var(--f-body);
+}
+.talk-form textarea { resize: vertical; min-height: 76px; }
+.talk-actions { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: 12.5px; color: var(--muted); }
+.talk-msg { color: var(--red-ink); font-weight: 600; }
+.post {
+  flex: none; height: 38px; padding: 0 20px; border-radius: 999px; border: 0; cursor: pointer;
+  background: var(--red); color: var(--on-red); font: 700 14px var(--f-body);
+}
+.post:disabled { opacity: .6; cursor: progress; }
 .photo { position: relative; aspect-ratio: 4 / 3; max-width: 100%; background: var(--red-soft); overflow: hidden; }
 .photo img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
 .photo .fallback {
@@ -213,7 +254,9 @@ details summary { cursor: pointer; color: var(--ink); font-weight: 600; }
   .body { padding: 10px 10px 12px; }
   .meta { font-size: 12px; }
   .votes { padding: 0 10px 12px; gap: 6px; }
-  .vote { padding: 0 10px; flex: 1 1 0; justify-content: center; }
+  .vote { padding: 0 8px; gap: 4px; flex: 1 1 0; justify-content: center; }
+  .talk { width: 100%; max-width: 100%; max-height: 90vh; margin: auto 0 0; border-radius: 16px 16px 0 0; }
+  .talk-form { padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px)); }
   .tier { scroll-margin-top: 170px; }
   select { flex: 1 1 140px; }
 }
@@ -261,11 +304,24 @@ details summary { cursor: pointer; color: var(--ink); font-weight: 600; }
   <div class="wrap" id="results"></div>
 </main>
 <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+<dialog class="talk" id="talk" aria-labelledby="talk-title">
+  <div class="talk-head">
+    <div><h2 id="talk-title"></h2><p class="talk-sub" id="talk-sub"></p></div>
+    <button class="talk-x" id="talk-x" type="button" aria-label="Close comments"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+  </div>
+  <div class="talk-list" id="talk-list" aria-live="polite"></div>
+  <form class="talk-form" id="talk-form">
+    <input id="talk-name" maxlength="40" placeholder="Your name (optional)" autocomplete="nickname" aria-label="Your name, optional">
+    <textarea id="talk-body" maxlength="1000" rows="3" required placeholder="How was it? What did you order?" aria-label="Your comment"></textarea>
+    <div class="talk-actions"><span id="talk-msg">Comments are public. No sign-in needed.</span><button class="post" id="talk-post" type="submit">Post</button></div>
+  </form>
+</dialog>
 
 <footer>
   <div class="wrap">
     <p>Tiers: T0 Best of Boston · T0.5 One of the best · T1 High quality cooking · T1.5 Decent cooking · T2 Average cooking · T3 Poor cooking · T4 Not recommended · T5 Terrible cooking, please avoid.</p>
     <p class="vote-hint">Votes are anonymous. Each phone or computer gets one vote per restaurant, and tapping the same button again takes it back.</p>
+    <p class="talk-hint">Tap 💬 on any card to read what friends said or leave your own note. Comments are public; you can delete your own from the same phone or computer.</p>
     <p>Tap any restaurant to open it in Google Maps. Photos come from the restaurants' public listings and reviews online and belong to their photographers.</p>
     <details>
       <summary>Photo sources</summary>
@@ -292,6 +348,8 @@ const VOTE_STORE = {"url": "https://trivivzoyzsqilansltz.supabase.co", "key": "s
 const $ = (s) => document.querySelector(s);
 const state = { q: "", cuisine: "", area: "", sort: "", tiers: new Set() };
 const votes = { on: false, totals: {}, mine: {}, voter: "", busy: new Set() };
+const talk = { on: false, counts: {}, id: "", seq: 0 };
+const ICON_TALK = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>`;
 const ICON_UP = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 10v12"/><path d="M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2a3.13 3.13 0 0 1 3 3.88Z"/></svg>`;
 const ICON_DOWN = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 14V2"/><path d="M9 18.12 10 14H4.17a2 2 0 0 1-1.92-2.56l2.33-8A2 2 0 0 1 6.5 2H20a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-2.76a2 2 0 0 0-1.79 1.11L12 22a3.13 3.13 0 0 1-3 3.88Z"/></svg>`;
 const tierId = (c) => "tier-" + c.replace(".", "-").toLowerCase();
@@ -306,7 +364,7 @@ function countBy(list, key) {
 }
 
 function buildControls() {
-  $("#lede").innerHTML = `${DATA.length} restaurants around Greater Boston, sorted into eight tiers. Within a tier, the order means nothing. Tap a tier to jump to it, or use the filters to narrow things down.<span class="vote-hint"> Been to one? Tap 👍 or 👎 on its card to add your vote.</span>`;
+  $("#lede").innerHTML = `${DATA.length} restaurants around Greater Boston, sorted into eight tiers. Within a tier, the order means nothing. Tap a tier to jump to it, or use the filters to narrow things down.<span class="vote-hint"> Been to one? Tap 👍 or 👎 on its card to add your vote.</span><span class="talk-hint"> Tap 💬 to read or leave a comment.</span>`;
   $("#key").innerHTML = TIERS.map((t) => {
     const n = DATA.filter((r) => r.tier === t.code).length;
     return `<a href="#${tierId(t.code)}"><span class="code">${t.code}<small>${n}</small></span><span class="what">${esc(t.name)}</span></a>`;
@@ -354,7 +412,8 @@ function voteButtons(r) {
   const mine = votes.mine[r.id] || 0;
   const busy = votes.busy.has(r.id) ? ` aria-busy="true"` : "";
   return `<button class="vote up" type="button" aria-pressed="${mine === 1}"${busy} aria-label="Like ${esc(r.name)}, ${t.up} so far">${ICON_UP}<span>${t.up}</span></button>
-    <button class="vote down" type="button" aria-pressed="${mine === -1}"${busy} aria-label="Dislike ${esc(r.name)}, ${t.down} so far">${ICON_DOWN}<span>${t.down}</span></button>`;
+    <button class="vote down" type="button" aria-pressed="${mine === -1}"${busy} aria-label="Dislike ${esc(r.name)}, ${t.down} so far">${ICON_DOWN}<span>${t.down}</span></button>
+    <button class="vote talk" type="button" aria-haspopup="dialog" aria-label="Comments on ${esc(r.name)}, ${talk.counts[r.id] || 0} so far">${ICON_TALK}<span>${talk.counts[r.id] || 0}</span></button>`;
 }
 
 function paintVotes(id) {
@@ -474,10 +533,126 @@ async function castVote(id, dir) {
   paintVotes(id);
 }
 
+/* ---- Comments ---- */
+async function loadTalk() {
+  if (!VOTE_STORE.url || !VOTE_STORE.key) return;
+  loadLocal();
+  try {
+    const rows = await rpc("comment_counts");
+    talk.counts = {};
+    (rows || []).forEach((x) => { talk.counts[x.restaurant] = Number(x.n) || 0; });
+    talk.on = true;
+    document.body.classList.add("talk-on");
+    try { $("#talk-name").value = localStorage.getItem("gg-name") || ""; } catch (e) {}
+    render();
+  } catch (e) {
+    // Comments not set up yet, or store unreachable: the 💬 button stays hidden.
+  }
+}
+
+const when = (iso) => {
+  const d = new Date(iso);
+  return isNaN(d) ? "" : d.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
+};
+
+function talkSub(id) {
+  const n = talk.counts[id] || 0;
+  return n ? `${n} comment${n > 1 ? "s" : ""} from friends` : "No comments yet";
+}
+
+function setTalkCount(id, n) {
+  talk.counts[id] = Math.max(0, n);
+  paintVotes(id);
+  if (talk.id === id) $("#talk-sub").textContent = talkSub(id);
+}
+
+async function showComments(id) {
+  const seq = ++talk.seq;
+  const list = $("#talk-list");
+  list.innerHTML = `<p class="note">Loading comments…</p>`;
+  try {
+    const rows = (await rpc("list_comments", { p_restaurant: id, p_author: votes.voter })) || [];
+    if (seq !== talk.seq) return;
+    if (rows.length !== (talk.counts[id] || 0)) setTalkCount(id, rows.length);
+    list.innerHTML = rows.length
+      ? rows.map((c) => `<article class="cmt"><div class="cmt-head"><b>${esc(c.name || "A friend")}</b><time datetime="${esc(c.created_at)}">${when(c.created_at)}</time>${c.mine ? `<button class="cmt-del" type="button" data-cid="${Number(c.id)}">Delete</button>` : ""}</div><p>${esc(c.body)}</p></article>`).join("")
+      : `<p class="note">No comments yet. Been here? Be the first to say how it was.</p>`;
+  } catch (e) {
+    if (seq === talk.seq) list.innerHTML = `<p class="note">Comments didn't load. Check your connection and try again.</p>`;
+  }
+}
+
+function openTalk(id) {
+  const r = DATA.find((x) => x.id === id); if (!r) return;
+  talk.id = id;
+  $("#talk-title").textContent = r.name;
+  $("#talk-sub").textContent = talkSub(id);
+  $("#talk-msg").textContent = "Comments are public. No sign-in needed.";
+  $("#talk-msg").classList.remove("talk-msg");
+  const dlg = $("#talk");
+  if (!dlg.open) { dlg.showModal ? dlg.showModal() : dlg.setAttribute("open", ""); }
+  showComments(id);
+}
+
+function closeTalk() {
+  const dlg = $("#talk");
+  talk.id = ""; talk.seq++;
+  if (dlg.open) { dlg.close ? dlg.close() : dlg.removeAttribute("open"); }
+}
+
+function talkError(msg) {
+  $("#talk-msg").textContent = msg;
+  $("#talk-msg").classList.add("talk-msg");
+}
+
+async function postComment(e) {
+  e.preventDefault();
+  const id = talk.id, body = $("#talk-body").value.trim(), name = $("#talk-name").value.trim();
+  if (!id || !body) { $("#talk-body").focus(); return; }
+  const btn = $("#talk-post");
+  btn.disabled = true;
+  try {
+    await rpc("add_comment", { p_restaurant: id, p_author: votes.voter, p_name: name, p_body: body });
+    try { localStorage.setItem("gg-name", name); } catch (err) {}
+    $("#talk-body").value = "";
+    $("#talk-msg").textContent = "Posted. Thanks!";
+    $("#talk-msg").classList.remove("talk-msg");
+    setTalkCount(id, (talk.counts[id] || 0) + 1);
+    if (talk.id === id) await showComments(id);
+  } catch (err) {
+    talkError("Your comment didn't post. Wait a minute and try again.");
+  }
+  btn.disabled = false;
+}
+
+async function deleteComment(b) {
+  if (!confirm("Delete your comment?")) return;
+  const id = talk.id;
+  b.disabled = true;
+  try {
+    await rpc("delete_comment", { p_id: Number(b.dataset.cid), p_author: votes.voter });
+    setTalkCount(id, (talk.counts[id] || 0) - 1);
+    if (talk.id === id) await showComments(id);
+  } catch (err) {
+    b.disabled = false;
+    talkError("That didn't delete. Try again.");
+  }
+}
+
 function bind() {
   $("#results").addEventListener("click", (e) => {
     const b = e.target.closest(".vote"); if (!b) return;
-    castVote(b.closest(".votes").dataset.id, b.classList.contains("up") ? 1 : -1);
+    const id = b.closest(".votes").dataset.id;
+    if (b.classList.contains("talk")) { openTalk(id); return; }
+    castVote(id, b.classList.contains("up") ? 1 : -1);
+  });
+  $("#talk-form").addEventListener("submit", postComment);
+  $("#talk-x").addEventListener("click", closeTalk);
+  $("#talk").addEventListener("close", () => { talk.id = ""; talk.seq++; });
+  // Tapping the dimmed backdrop closes the panel.
+  $("#talk").addEventListener("click", (e) => { if (e.target === e.currentTarget) closeTalk(); });
+  $("#talk-list").addEventListener("click", (e) => {
+    const b = e.target.closest(".cmt-del"); if (b) deleteComment(b);
   });
   $("#sort").addEventListener("change", (e) => { state.sort = e.target.value; render(); });
   $("#q").addEventListener("input", (e) => { state.q = e.target.value.trim().toLowerCase(); render(); });
@@ -507,6 +682,7 @@ buildControls();
 bind();
 render();
 loadVotes();
+loadTalk();
 if (location.hash && document.querySelector(location.hash)) document.querySelector(location.hash).scrollIntoView();
 </script>
 
