@@ -154,7 +154,7 @@ body:not(.votes-on) .vote.up, body:not(.votes-on) .vote.down { display: none; }
   font: 600 13px/1 var(--f-body); font-variant-numeric: tabular-nums;
 }
 .vote svg { width: 16px; height: 16px; flex: none; }
-.vote b { font: 600 13px/1 var(--f-zh); }
+.vote b { font: 600 13px/1 var(--f-body); }
 .vote:hover { border-color: var(--red-ink); color: var(--ink); }
 .vote:focus-visible { outline: 2px solid var(--red-ink); outline-offset: 2px; }
 .vote.up[aria-pressed="true"] { background: var(--red); border-color: var(--red); color: var(--on-red); }
@@ -173,12 +173,12 @@ body:not(.votes-on) .vote.up, body:not(.votes-on) .vote.down { display: none; }
   background: var(--ink); color: var(--bg); font: 500 14px/1.4 var(--f-body); box-shadow: var(--shadow);
 }
 /* Comments panel: a centred sheet on wide screens, a bottom sheet on phones */
-.talk {
+.sheet {
   width: min(560px, calc(100% - 32px)); max-height: min(88vh, 760px); padding: 0; border: 0; border-radius: 14px;
   background: var(--surface); color: var(--ink); box-shadow: 0 20px 60px rgba(0,0,0,.35);
 }
-.talk[open] { display: flex; flex-direction: column; }
-.talk::backdrop { background: rgba(20, 8, 9, .5); }
+.sheet[open] { display: flex; flex-direction: column; }
+.sheet::backdrop { background: rgba(20, 8, 9, .5); }
 .talk-head { display: flex; gap: 12px; align-items: start; justify-content: space-between; padding: 18px 18px 12px; border-bottom: 1px solid var(--line); }
 .talk-head h2 { margin: 0; font: 400 22px/1.15 var(--f-display); text-wrap: balance; }
 .talk-sub { margin: 2px 0 0; font-size: 13px; color: var(--muted); }
@@ -254,9 +254,13 @@ details summary { cursor: pointer; color: var(--ink); font-weight: 600; }
   .name { font-size: 16px; }
   .body { padding: 10px 10px 12px; }
   .meta { font-size: 12px; }
-  .votes { padding: 0 10px 12px; gap: 6px; }
-  .vote { padding: 0 8px; gap: 4px; flex: 1 1 0; justify-content: center; }
-  .talk { width: 100%; max-width: 100%; max-height: 90vh; margin: auto 0 0; border-radius: 16px 16px 0 0; }
+  /* Two vote buttons stacked on the left, comments beside them */
+  .votes { padding: 0 10px 12px; gap: 6px; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "down talk" "up talk"; }
+  .votes-on .votes, .talk-on .votes { display: grid; }
+  .vote { width: 100%; padding: 0 8px; gap: 4px; justify-content: center; height: 30px; }
+  .vote.down { grid-area: down; } .vote.up { grid-area: up; }
+  .talk-on .vote.talk { grid-area: talk; height: 100%; flex-direction: column; padding: 0 10px; }
+  .sheet { width: 100%; max-width: 100%; max-height: 90vh; margin: auto 0 0; border-radius: 16px 16px 0 0; }
   .talk-form { padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px)); }
   .tier { scroll-margin-top: 170px; }
   select { flex: 1 1 140px; }
@@ -305,7 +309,7 @@ details summary { cursor: pointer; color: var(--ink); font-weight: 600; }
   <div class="wrap" id="results"></div>
 </main>
 <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
-<dialog class="talk" id="talk" aria-labelledby="talk-title">
+<dialog class="sheet" id="talk" aria-labelledby="talk-title">
   <div class="talk-head">
     <div><h2 id="talk-title"></h2><p class="talk-sub" id="talk-sub"></p></div>
     <button class="talk-x" id="talk-x" type="button" aria-label="Close comments"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
@@ -321,7 +325,7 @@ details summary { cursor: pointer; color: var(--ink); font-weight: 600; }
 <footer>
   <div class="wrap">
     <p>Tiers: T0 Best of Boston · T0.5 One of the best · T1 High quality cooking · T1.5 Decent cooking · T2 Average cooking · T3 Poor cooking · T4 Not recommended · T5 Terrible cooking, please avoid.</p>
-    <p class="vote-hint">高了 means a restaurant is ranked too high; 低了 means it's ranked too low. Votes are anonymous. Each phone or computer gets one vote per restaurant, and tapping the same button again takes it back.</p>
+    <p class="vote-hint">Overrated means a restaurant is ranked too high for its tier; Underrated means it deserves a higher one. Votes are anonymous. Each phone or computer gets one vote per restaurant, and tapping the same button again takes it back.</p>
     <p class="talk-hint">Tap 💬 on any card to read what friends said or leave your own note. Comments are public; you can delete your own from the same phone or computer.</p>
     <p>Tap any restaurant to open it in Google Maps. Some photos are Gaga's own; the rest come from the restaurants' public listings and reviews online and belong to their photographers.</p>
     <details>
@@ -363,7 +367,7 @@ function countBy(list, key) {
 }
 
 function buildControls() {
-  $("#lede").innerHTML = `${DATA.length} restaurants around Greater Boston, sorted into eight tiers. Within a tier, the order means nothing. Tap a tier to jump to it, or use the filters to narrow things down.<span class="vote-hint"> Been to one? Think a tier is off? Tap 高了 if it's ranked too high, or 低了 if it deserves better.</span><span class="talk-hint"> Tap 💬 to read or leave a comment.</span>`;
+  $("#lede").innerHTML = `${DATA.length} restaurants around Greater Boston, sorted into eight tiers. Within a tier, the order means nothing. Tap a tier to jump to it, or use the filters to narrow things down.<span class="vote-hint"> Been to one? Think a tier is off? Tap Overrated or Underrated on its card.</span><span class="talk-hint"> Tap 💬 to read or leave a comment.</span>`;
   $("#key").innerHTML = TIERS.map((t) => {
     const n = DATA.filter((r) => r.tier === t.code).length;
     return `<a href="#${tierId(t.code)}"><span class="code">${t.code}<small>${n}</small></span><span class="what">${esc(t.name)}</span></a>`;
@@ -410,8 +414,8 @@ function voteButtons(r) {
   const t = votes.totals[r.id] || { up: 0, down: 0 };
   const mine = votes.mine[r.id] || 0;
   const busy = votes.busy.has(r.id) ? ` aria-busy="true"` : "";
-  return `<button class="vote down" type="button" aria-pressed="${mine === -1}"${busy} title="Ranked too high" aria-label="${esc(r.name)} is ranked too high, ${t.down} so far"><b lang="zh-Hans">高了</b><span>${t.down}</span></button>
-    <button class="vote up" type="button" aria-pressed="${mine === 1}"${busy} title="Ranked too low" aria-label="${esc(r.name)} is ranked too low, ${t.up} so far"><b lang="zh-Hans">低了</b><span>${t.up}</span></button>
+  return `<button class="vote down" type="button" aria-pressed="${mine === -1}"${busy} title="Ranked too high" aria-label="${esc(r.name)} is ranked too high, ${t.down} so far"><b>Overrated</b><span>${t.down}</span></button>
+    <button class="vote up" type="button" aria-pressed="${mine === 1}"${busy} title="Ranked too low" aria-label="${esc(r.name)} is ranked too low, ${t.up} so far"><b>Underrated</b><span>${t.up}</span></button>
     <button class="vote talk" type="button" aria-haspopup="dialog" aria-label="Comments on ${esc(r.name)}, ${talk.counts[r.id] || 0} so far">${ICON_TALK}<span>${talk.counts[r.id] || 0}</span></button>`;
 }
 
